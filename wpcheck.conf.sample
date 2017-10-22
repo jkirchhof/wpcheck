@@ -1,0 +1,43 @@
+# Configuration file for wpcheck.sh
+
+# Edit required values and see options at end.
+# Leading spaces are allowed.  All other characters will comment lines.
+
+### Required values:
+
+# path to wp-cli
+wp_path=/usr/local/bin/wp
+
+# path to PHP
+php_path=/usr/local/bin/php
+
+# path below which to search for WP instances
+search_path=/usr/local/www/ 
+
+# flags passed to find (can be empty but must be in conf file)
+find_flags = -maxdepth 4
+
+# email bcc address
+email_b=admin@server.biz
+
+# email from address
+email_f=admin@server.io
+
+# message when comments are enabled by default
+message_comments=--Comments are open by default.  In Settings > Discussion, they should be disabled.
+
+# message when pingbacks are enabled by default
+message_pingbacks=--Pingbacks are open by default. In Settings > Discussion, they should be disabled.
+
+
+### End of required values
+
+
+# skip sites, allow comments/pingbacks, and exempt email addresses using lines such as:
+
+# skip example.com
+# skip example.edu/path
+# allow comments example.org
+# allow pingbacks example.net
+# no email user@example.biz
+
