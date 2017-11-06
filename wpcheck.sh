@@ -74,7 +74,7 @@ do
     if [ "$ISSUES" -gt 0 ]
     then
       echo "$STATUS"
-      NO_EMAIL=`echo "$CONFIG" | grep -E "^ *no email $ADMIN_EMAIL* " `
+      NO_EMAIL=`echo "$CONFIG" | grep -E "^ *no email $ADMIN_EMAIL*" `
       if [ "$NO_EMAIL" == "" -a "--email-admins" == "$1" ]
       then
         echo "$STATUS" | mail -s "Wordpress upgrades needed" -b "$EMAIL_B" "$ADMIN_EMAIL" -f "$EMAIL_F"
