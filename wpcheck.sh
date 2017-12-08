@@ -23,25 +23,32 @@ export WP_CLI_PHP
 
 for WPPATH in `find $SEARCH_PATH -type d -name 'wp-admin' $FIND_FLAGS`
 do
-  WPPATH=` echo "$WPPATH" | sed -E 's~/wp-admin$~~g'`
+  WPPATH=`echo "$WPPATH" | sed -E 's~/wp-admin$~~g'`
   echo $'\n'$WPPATH
-  FLAGS='--allow-root --path='"$WPPATH"
-  SITE_URL=`$WP option get siteurl $FLAGS | sed -E -n 's~[^/]+//~~p'`
+  USER=$(stat -f '%u' "$WPPATH")
+  FLAGS='--path='"$WPPATH"
+  SUDOWP="sudo -u #$USER $WP"
+  SITE_URL=`$SUDOWP option get siteurl $FLAGS | sed -E -n 's~[^/]+//~~p'`
   if ! echo "$CONFIG" | grep -qs -E "^ *skip $SITE_URL *"'$'
   then
-    ADMIN_EMAIL=`$WP option get admin_email $FLAGS`
-    STATUS=`$WP option get blogname $FLAGS`$'\n'"$SITE_URL"$'\n'"$ADMIN_EMAIL"
+    ADMIN_EMAIL=`$SUDOWP option get admin_email $FLAGS`
+    STATUS=`$SUDOWP option get blogname $FLAGS`$'\n'"$SITE_URL"$'\n'"$ADMIN_EMAIL"
     ISSUES=0
     
-    if $WP core check-update $FLAGS | grep -qs 'package_url'
+    if $SUDOWP core check-update $FLAGS | grep -qs 'package_url'
     then
       ISSUES=$((1+ISSUES))
-      STATUS="$STATUS"$'\n--Core update needed (Currently version '`$WP core version $FLAGS`')'
+      STATUS="$STATUS"$'\n--Core update needed (Currently version '`$SUDOWP core version $FLAGS`')'
+      if [ "--update-all" == "$1" ]
+      then
+        `$SUDOWP core update $FLAGS` > /dev/null 2>/dev/null
+        STATUS="$STATUS"$'\n  * * * core updated * * *'
+      fi
     fi
     
     if ! echo "$CONFIG" | grep -qs -E "^ *allow comments $SITE_URL *"
     then
-      if $WP option get default_comment_status $FLAGS | grep -qs 'open'
+      if $SUDOWP option get default_comment_status $FLAGS | grep -qs 'open'
       then
         ISSUES=$((1+ISSUES))
         STATUS="$STATUS"$'\n'"$MESSAGE_COMMENTS"
@@ -50,27 +57,37 @@ do
   
     if ! echo "$CONFIG" | grep -qs -E "^ *allow pingbacks $SITE_URL *"
     then
-      if $WP option get default_ping_status $FLAGS | grep -qs 'open'
+      if $SUDOWP option get default_ping_status $FLAGS | grep -qs 'open'
       then
         ISSUES=$((1+ISSUES))
         STATUS="$STATUS"$'\n--'"$MESSAGE_PINGBACKS"
       fi
     fi
     
-    PTEST=` $WP plugin status $FLAGS | grep -E '^ +[^AIN ]+[AIN]? ' | sed -E 's/^ +[^AIN ]+[AIN]? /    /g'`
+    PTEST=` $SUDOWP plugin status $FLAGS | grep -E '^ +[^AIN ]+[AIN]? ' | sed -E 's/^ +[^AIN ]+[AIN]? /    /g'`
     if [ "$PTEST" != "" ]
     then
       ISSUES=$((1+ISSUES))
       STATUS="$STATUS"$'\n--Plugin update(s) needed:\n'"$PTEST"
+      if [ "--update-all" == "$1" ]
+      then
+        `$SUDOWP plugin update $FLAGS --all` > /dev/null 2>/dev/null
+        STATUS="$STATUS"$'\n  * * * plugins updated * * *'
+      fi
     fi
   
-    TTEST=` $WP theme  status $FLAGS | grep -E '^ +[^AINP ]{1,2}[AINP]? ' | sed -E 's/^ +[^AINP ]{1,2}[AINP]? /    /g'`
+    TTEST=` $SUDOWP theme status $FLAGS | grep -E '^ +[^AINP ]{1,2}[AINP]? ' | sed -E 's/^ +[^AINP ]{1,2}[AINP]? /    /g'`
     if [ "$TTEST" != "" ]
     then
       ISSUES=$((1+ISSUES))
       STATUS="$STATUS"$'\n--Theme update(s) needed:\n'"$TTEST"
+      if [ "--update-all" == "$1" ]
+      then
+        `$SUDOWP theme update $FLAGS --all` > /dev/null 2>/dev/null
+        STATUS="$STATUS"$'\n  * * * themes updated * * *'
+      fi
     fi
-  
+
     if [ "$ISSUES" -gt 0 ]
     then
       echo "$STATUS"
