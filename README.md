@@ -8,6 +8,8 @@ Shell script to find out of date Wordpress installations and components.
 
 This script can email site admins.  Postfix, Sendmail, or something similar needs to be configured, or this will fail (and probably do so silently).
 
+`sudo` is required as of December 8, 2017. It's necessary for updating multiple sites with different owners (i.e. when the update script is run by root), but it shouldn't be necessary for crontabs that check sites and email owners or other ad hoc checks.  This should be revised soon(ish).
+
 ## Installation and configuration
 
 Rename wpcheck.conf.sample to wpcheck.conf, and configure the values in the required section.
@@ -22,9 +24,9 @@ Run the script as needed or set up a crontab run as a user with read access for 
 
 Pass `--email-admins` for the script to email results to site admins (per the value of 'admin_email' in the wp_options table).  Results are only sent when updates are needed or a site allows comments/pingbacks by default and has not been white listed to allow them.
 
+Pass `--update-all` for the script to update all out of date core, themes, and plugins.
+
+The script only accepts one argument.  If both `--email-admins` and `--update-all` are passed, the first will be respected.  The second will be ignored.  This is easily corrected but perhaps shouldn't be, since automatic udpates aren't guaranteed to work.  Using the script for completely automated status reports and heavily assisted manual updates is generally best practice.
+
 See the end of the config file to exclude sites (such as dev sites with restricted access) prevent emailing to particular users (this is useful for reducing clutter when a site admin also received crontab results).  Sites can also be whitelisted for allowing comments and/or pingbacks on new posts.
-
-## Automatic updates
-
-This script could be modified to use wp-cli to update out of date Wordpress instances, plugins, and themes. This would require adding something like `sudo -u $SITE_OWNER `$WP core update $FLAGS`. Note that $SITE_OWNER is not calculated by the current script, though that's easy enough.  Unlike Wordpress' built in auto-updating feature, this would not require that your web server's owner-user have write access to WP core, plugin, and theme files.  I may build this, but it has limited usefulness, since sites still require manual testing post-update.
 
